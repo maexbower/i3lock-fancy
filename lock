@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# Dependencies: imagemagick, i3lock-color-git, scrot
+# Dependencies: imagemagick, i3lock-color-git
+#for use with X Server
 
 IMAGE=$(mktemp).png
-TEXT="Gib Passwort AMK!"
+XWDIMAGE=$(mktemp).xwd
+TEXT="Bitte das Passwort eingeben"
 
 # get path where the script is located
 # its used for the lock icon
@@ -19,7 +21,10 @@ case $LANG in
 esac
 
 VALUE="60" #brightness value to compare to
-$(gnome-screenshot -f $IMAGE)
+#make an screenshot with X-Server and add 20 to all Pixels
+$(xwd -out $XWDIMAGE -add 20 -root -silent)
+$(convert $XWDIMAGE $IMAGE)
+
 COLOR=`convert $IMAGE -colorspace hsb -resize 1x1 txt:- | sed -E '/.*$/ {
                              N
                              s/.*\n.*([0-9]{1,2}[^\.])\.[0-9]+%\)$/\1/
