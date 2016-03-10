@@ -1,11 +1,34 @@
 #!/bin/bash
 
-# Dependencies: imagemagick, i3lock-color-git
-#for use with X Server
+# Dependencies: imagemagick, i3lock-color-git, scrot
 
 IMAGE=$(mktemp).png
-XWDIMAGE=$(mktemp).xwd
-TEXT="Bitte das Passwort eingeben"
+IMAGECOLOR=$(mktemp).png
+TMPIMG=$(mktemp).xwd
+
+#LOCKIMAGE is the Basname and will be extendet with _dark and png
+#TEXT is the Text under the image
+
+#Get Location from WLAN
+LOCATION=$(/sbin/iwgetid -r)
+case $LOCATION in
+	"WLAN_001")
+		LOCKIMAGE="lock"
+		TEXT="Passwort Eingeben"
+		;;
+	"802.1X")
+		LOCKIMAGE="lock2"
+		TEXT="Computer gespert"
+		;;
+	"WIFIatWORK")
+		LOCKIMAGE="stop"
+		TEXT="you can\'t touch this"
+		;;
+	*)
+		LOCKIMAGE="lock"
+		TEXT="Passwort Eingeben"
+		;;
+esac	
 
 # get path where the script is located
 # its used for the lock icon
@@ -13,19 +36,13 @@ pushd `dirname $0` > /dev/null
 SCRIPTPATH=`pwd`
 popd > /dev/null
  
-# l10n support
-case $LANG in
-    fr_* ) TEXT="Entrez votre mot de passe" ;; # Français
-    es_* ) TEXT="Ingrese su contraseña" ;; # Española
-    pl_* ) TEXT="Podaj hasło" ;; # Polish
-esac
 
 VALUE="60" #brightness value to compare to
-#make an screenshot with X-Server and add 20 to all Pixels
-$(xwd -out $XWDIMAGE -add 20 -root -silent)
-$(convert $XWDIMAGE $IMAGE)
-
-COLOR=`convert $IMAGE -colorspace hsb -resize 1x1 txt:- | sed -E '/.*$/ {
+$(xwd -root -out $TMPIMG -silent)
+$(convert $TMPIMG $IMAGE)
+#Crop Image to the center where the text an image will be, so you won't get white text on white space
+$(convert $IMAGE -gravity Center -crop 50%\! $IMAGECOLOR)
+COLOR=`convert $IMAGECOLOR -colorspace hsb -resize 1x1 txt:- | sed -E '/.*$/ {
                              N
                              s/.*\n.*([0-9]{1,2}[^\.])\.[0-9]+%\)$/\1/
                              }'`;
@@ -35,7 +52,7 @@ if [ "$COLOR" -gt "$VALUE" ]; then #white background image and black text
         -filter Gaussian -resize 20% -define filter:sigma=1.5 -resize 500.5% \
         -font Liberation-Sans -pointsize 26 -fill black -gravity center \
         -annotate +0+160 "$TEXT" \
-        $SCRIPTPATH/lockdark.png -gravity center -composite $IMAGE
+        $SCRIPTPATH/"${LOCKIMAGE}_dark.png" -gravity center -composite $IMAGE
     PARAM='--textcolor=00000000 --insidecolor=0000001c --ringcolor=0000003e \
         --linecolor=00000000 --keyhlcolor=ffffff80 --ringvercolor=ffffff00 \
         --insidevercolor=ffffff1c --ringwrongcolor=ffffff55 --insidewrongcolor=ffffff1c'
@@ -44,7 +61,7 @@ else #black
         -filter Gaussian -resize 20% -define filter:sigma=1.5 -resize 500.5% \
         -font Liberation-Sans -pointsize 26 -fill white -gravity center \
         -annotate +0+160 "$TEXT" \
-        $SCRIPTPATH/lock.png -gravity center -composite $IMAGE
+        $SCRIPTPATH/"${LOCKIMAGE}.png" -gravity center -composite $IMAGE
     PARAM='--textcolor=ffffff00 --insidecolor=ffffff1c --ringcolor=ffffff3e \
         --linecolor=ffffff00 --keyhlcolor=00000080 --ringvercolor=00000000 \
         --insidevercolor=0000001c --ringwrongcolor=00000055 --insidewrongcolor=0000001c'
