@@ -3,7 +3,7 @@ i3lock-fancy
 
 This is an i3lock bash script that takes a screenshot of the desktop, blurs the background and adds a lock icon and text
 
-website: [github pages website](http://meskarune.github.io/i3lock-fancy/)
+Original website: [github pages website](http://meskarune.github.io/i3lock-fancy/)
 
 ![screen shot of lockscreen](https://raw.githubusercontent.com/meskarune/i3lock-fancy/master/screenshot.png)
 
